@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>املاک زمین‌نما | نقشه زمین‌ها و املاک</title>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<style>
+:root{--bg:#e6f4ff;--panel:rgba(255,255,255,.9);--line:rgba(40,60,130,.14);--gold:#ff7a45;--gold2:#ff3d81;--tx:#1b2340;--mu:#6b7794;--ok:#12b886;--bad:#f03e3e}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;font-family:Vazirmatn,Tahoma,sans-serif;background:var(--bg);color:var(--tx);overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+#map{position:fixed;inset:0}
+.glass{background:var(--panel);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--line);box-shadow:0 14px 40px rgba(60,80,170,.28)}
+header{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;left:12px;z-index:800;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:20px}
+.logo{font-weight:900;font-size:clamp(16px,2.4vw,22px);background:linear-gradient(120deg,#7c3aed,#ff3d81 55%,#ff9a3c);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.logo small{display:block;font-size:10px;font-weight:300;color:var(--mu);-webkit-text-fill-color:var(--mu)}
+.search{flex:1;min-width:0;position:relative}
+.search input{width:100%;padding:10px 40px 10px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(40,60,130,.06);outline:0}
+.search input:focus{border-color:var(--gold)}
+.search span{position:absolute;right:13px;top:50%;transform:translateY(-50%);opacity:.6}
+.btn{border:0;border-radius:14px;padding:10px 16px;cursor:pointer;font-weight:600;background:rgba(40,60,130,.07);border:1px solid var(--line);transition:.2s;white-space:nowrap}
+.btn:hover{background:rgba(40,60,130,.14)}
+.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;border:0;font-weight:800}
+.gold:hover{filter:brightness(1.1);background:linear-gradient(135deg,var(--gold),var(--gold2))}
+.danger{color:var(--bad)}
+#side{position:fixed;z-index:700;top:calc(78px + env(safe-area-inset-top));bottom:12px;right:12px;width:340px;border-radius:22px;display:flex;flex-direction:column;overflow:hidden;transition:transform .35s}
+#side h3{padding:14px 16px 6px;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.chips{display:flex;gap:6px;padding:4px 14px 10px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:99px;font-size:12px;border:1px solid var(--line);background:none;cursor:pointer;color:var(--mu)}
+.chip.on{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;border-color:var(--gold);font-weight:700}
+#list{overflow:auto;padding:4px 12px 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.card{display:flex;gap:12px;padding:10px;border-radius:16px;background:rgba(40,60,130,.05);border:1px solid var(--line);cursor:pointer;transition:.2s}
+.card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.thumb{width:78px;height:78px;border-radius:12px;background:#dbeafe center/cover;flex:none;display:grid;place-items:center;font-size:26px}
+.card b{display:block;font-size:14px}.card .m{font-size:12px;color:var(--mu);margin-top:3px}
+.price{color:var(--gold);font-weight:800;font-size:13px;margin-top:4px}
+.empty{color:var(--mu);text-align:center;padding:30px 10px;font-size:13px;line-height:2}
+#toggleSide{display:none}
+.pin{width:34px;height:34px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);background:linear-gradient(135deg,var(--gold),var(--gold2));border:2px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.5);display:grid;place-items:center}
+.pin i{transform:rotate(45deg);font-style:normal;font-size:15px}
+.pin .pin-flag{position:absolute;top:-9px;right:-12px;transform:rotate(45deg);width:17px;height:17px;border:2px solid #fff;border-radius:50%;background:#12b886;color:#fff;font:900 11px/13px Tahoma,sans-serif;text-align:center;box-shadow:0 2px 7px #0005}
+.pin.draft .pin-flag{display:none}
+.pin.draft{background:linear-gradient(135deg,#5ec8ff,#2a7bd0);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:rotate(-45deg) scale(1.15)}}
+.layers{position:fixed;left:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:700;display:flex;gap:6px;padding:6px;border-radius:16px}
+.layers button{padding:8px 12px;border-radius:11px;border:0;background:none;cursor:pointer;font-size:12px;color:var(--mu)}
+.layers button.on{background:rgba(255,122,69,.18);color:var(--gold2);font-weight:700}
+.mm{overflow:hidden;background:#bfe3ff;touch-action:none;user-select:none;cursor:grab}.mm:active{cursor:grabbing}
+.mm-t,.mm-m{position:absolute;inset:0;pointer-events:none}
+.mm-i{position:absolute;max-width:none;-webkit-user-drag:none;transition:opacity .25s}
+.mm-m>*{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;touch-action:none}
+.mm-a{position:absolute;bottom:2px;right:4px;font-size:9px;background:rgba(255,255,255,.75);padding:1px 6px;border-radius:6px;pointer-events:none;direction:ltr}
+.mm-z{position:absolute;left:12px;bottom:calc(76px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;z-index:5}
+.mm-z button{width:42px;height:42px;border-radius:12px;border:0;background:#fff;font-size:20px;font-weight:700;color:#1b2340;box-shadow:0 4px 14px rgba(60,80,170,.3);cursor:pointer}
+/* sheet */
+.sheet{position:fixed;z-index:1000;top:0;bottom:0;left:0;width:min(520px,100%);transform:translateX(-105%);transition:transform .4s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;border-radius:0 26px 26px 0}
+.sheet.open{transform:none}
+.sheet .hd{display:flex;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top)) 18px 12px;border-bottom:1px solid var(--line)}
+.sheet .hd h2{font-size:17px}
+.sheet .bd{overflow:auto;padding:16px 18px calc(24px + env(safe-area-inset-bottom));flex:1}
+.x{width:36px;height:36px;border-radius:50%;padding:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{display:flex;flex-direction:column;gap:5px}.fld.w{grid-column:1/-1}.fld.hide{display:none}
+.fld label{font-size:12px;color:var(--mu)}
+.fld input,.fld select,.fld textarea{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(40,60,130,.06);outline:0;width:100%}
+.fld select option{background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold)}
+.fld textarea{min-height:80px;resize:vertical}
+.sec{grid-column:1/-1;margin-top:8px;font-weight:800;color:var(--gold);font-size:13px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.up{grid-column:1/-1;border:2px dashed var(--line);border-radius:16px;padding:16px;text-align:center;color:var(--mu);cursor:pointer;font-size:13px}
+.up:hover{border-color:var(--gold)}
+.mrow{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.mi{position:relative;width:80px;height:80px;border-radius:12px;overflow:hidden;background:#000}
+.mi img,.mi video{width:100%;height:100%;object-fit:cover}
+.mi b{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);display:grid;place-items:center;font-size:12px;cursor:pointer}
+.bar{position:sticky;bottom:-24px;display:flex;gap:10px;padding:14px 0 4px;margin-top:16px;background:linear-gradient(transparent,#fff 35%)}
+.bar .btn{flex:1}
+.gal{display:flex;gap:8px;overflow:auto;scroll-snap-type:x mandatory;margin-bottom:14px;border-radius:16px}
+.gal>*{flex:none;width:100%;height:240px;object-fit:cover;border-radius:16px;scroll-snap-align:center;background:#000}
+.hero{height:150px;border-radius:16px;margin-bottom:14px;display:grid;place-items:center;background:linear-gradient(135deg,#dbeafe,#fde7f3);color:var(--mu);font-size:13px}
+.tag{display:inline-block;padding:4px 12px;border-radius:99px;background:rgba(255,122,69,.14);color:var(--gold);font-size:12px;margin:0 0 6px 6px}
+.tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+.tbl td{padding:9px 4px;border-bottom:1px solid var(--line);vertical-align:top}.tbl td:first-child{color:var(--mu);width:38%}
+.big{font-size:22px;font-weight:900;color:var(--gold);margin:8px 0}
+.toast{position:fixed;z-index:2000;top:90px;left:50%;transform:translateX(-50%);padding:11px 20px;border-radius:14px;background:#fff;border:1px solid var(--gold);font-size:13px;box-shadow:0 10px 40px #0003}
+.hint{position:fixed;z-index:760;bottom:calc(70px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:99px;font-size:13px;display:none}
+@media(max-width:760px){
+ header{gap:6px;padding:8px 10px}.logo small{display:none}
+ #side{top:auto;height:46vh;left:8px;right:8px;width:auto;border-radius:22px 22px 18px 18px;bottom:8px;transform:translateY(calc(100% + 20px))}
+ #side.show{transform:none}
+ #toggleSide{display:block}
+ .layers{bottom:calc(60px + env(safe-area-inset-bottom));left:8px}
+ body.sideopen .layers{display:none}.mm-z{bottom:calc(120px + env(safe-area-inset-bottom))}
+ .sheet{border-radius:0;width:100%}.grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<header class="glass">
+ <div class="logo">زمین‌نما<small>نقشه املاک و مشاوره</small></div>
+ <div class="search"><span>🔍</span><input id="q" placeholder="جستجوی نام محل، مالک، آدرس، پلاک…"></div>
+ <button class="btn" id="toggleSide">📋 فهرست</button>
+ <button class="btn gold" id="adminBtn">ورود مدیر</button>
+</header>
+<aside id="side" class="glass">
+ <h3><span>فهرست املاک <span id="cnt" style="color:var(--mu);font-weight:400"></span></span></h3>
+ <div class="chips" id="chips"></div>
+ <div id="list"></div>
+</aside>
+<div class="layers glass" id="layers"><button data-l="sat" class="on">🛰 ماهواره</button><button data-l="str">🗺 خیابان</button><button data-l="esri">🌍 ماهواره ۲</button><button data-l="osm">🧭 OSM</button></div>
+<div class="hint glass" id="hint"></div>
+<section class="sheet glass" id="sheet"><div class="hd"><h2 id="shT"></h2><button class="btn x" id="shX">✕</button></div><div class="bd" id="shB"></div></section>
+
+<script>
+/* ===== موتور نقشه سبک داخلی (بدون وابستگی به CDN) ===== */
+const L=(()=>{
+const TS=256,PI=Math.PI,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const proj=(la,ln,z)=>{const n=TS*2**z,s=Math.sin(clamp(la,-85.05,85.05)*PI/180);return[(ln+180)/360*n,(.5-Math.log((1+s)/(1-s))/(4*PI))*n]};
+const unproj=(x,y,z)=>{const n=TS*2**z;return[Math.atan(Math.sinh(PI*(1-2*y/n)))*180/PI,x/n*360-180]};
+const em=o=>{o._h={};o.on=(t,f)=>{(o._h[t]=o._h[t]||[]).push(f);return o};o.emit=(t,e)=>(o._h[t]||[]).forEach(f=>f(e));return o};
+const ll=a=>Array.isArray(a)?a:[a.lat,a.lng];
+function tileLayer(url,o={}){const t=em({url,o,tiles:new Map(),map:null});t.addTo=m=>{m._add(t);return t};return t}
+function layerGroup(ls){return{ls,eachLayer:f=>ls.forEach(f),addTo(m){ls.forEach(l=>l.addTo(m));return this}}}
+function marker(p,o={}){const mk=em({p:ll(p),o,map:null}),el=document.createElement('div'),ic=o.icon||{};
+ el.innerHTML=ic.html||'📍';if(ic.iconSize){el.style.width=ic.iconSize[0]+'px';el.style.height=ic.iconSize[1]+'px'}mk.el=el;
+ mk.addTo=m=>{m._add(mk);return mk};
+ mk.setLatLng=q=>{mk.p=ll(q);mk.map&&mk.map.draw();return mk};
+ mk.getLatLng=()=>({lat:mk.p[0],lng:mk.p[1]});
+ let st=null;
+ el.addEventListener('pointerdown',e=>{e.stopPropagation();st={x:e.clientX,y:e.clientY,p:mk.p.slice(),mv:0};if(o.draggable)el.setPointerCapture(e.pointerId)});
+ el.addEventListener('pointermove',e=>{if(!st)return;const dx=e.clientX-st.x,dy=e.clientY-st.y;if(Math.hypot(dx,dy)>5)st.mv=1;
+  if(o.draggable&&st.mv&&mk.map){const z=mk.map.z,[x,y]=proj(st.p[0],st.p[1],z);mk.p=unproj(x+dx,y+dy,z);mk.map.draw();mk.emit('drag')}});
+ el.addEventListener('pointerup',()=>{if(st&&!st.mv)mk.emit('click');st=null});
+ return mk}
+function map(id,o={}){
+ const el=document.getElementById(id);el.classList.add('mm');
+ const tl=document.createElement('div'),ml=document.createElement('div'),at=document.createElement('div'),zc=document.createElement('div');
+ tl.className='mm-t';ml.className='mm-m';at.className='mm-a';zc.className='mm-z';zc.innerHTML='<button>＋</button><button>－</button>';
+ el.append(tl,ml,at,zc);
+ const M=em({z:5,c:[32,53],layers:[],mks:[],minZ:o.minZoom||2});
+ let raf=0,ct=0,cn=0,anim=0;
+ const sz=()=>[el.clientWidth||innerWidth,el.clientHeight||innerHeight];
+ M.draw=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;render()})};
+ const lvl=l=>Math.min(clamp(Math.floor(M.z),0,19),l.o.maxZoom||19);
+ function mkTile(l,li,tz,x,y,n){const i=new Image(),wx=((x%n)+n)%n,s=l.o.subdomains||'abc';
+  i.className='mm-i';i.draggable=false;i._z=tz;i._x=x;i._y=y;i.style.zIndex=li*100+tz;i.style.opacity=0;
+  i.onload=()=>{i._d=1;i.style.opacity=1;l.emit('tileload')};
+  i.onerror=()=>{i._d=1;i.remove();l.emit('tileerror')};
+  i.src=l.url.replace('{s}',s[(wx+y)%s.length]).replace('{z}',tz).replace('{x}',wx).replace('{y}',y);
+  tl.appendChild(i);l.tiles.set(tz+'/'+x+'/'+y,i)}
+ function render(){
+  M.c[0]=clamp(M.c[0],-80,80);M.c[1]=((M.c[1]+180)%360+360)%360-180;
+  const[W,H]=sz(),z=M.z,cc={},cen=k=>cc[k]||(cc[k]=proj(M.c[0],M.c[1],k));
+  M.layers.forEach((l,li)=>{
+   const tz=lvl(l),n=2**tz,ts=TS*2**(z-tz),[px,py]=cen(tz),cx=px/TS,cy=py/TS;
+   const x0=Math.floor(cx-W/2/ts),x1=Math.floor(cx+W/2/ts),y0=Math.max(0,Math.floor(cy-H/2/ts)),y1=Math.min(n-1,Math.floor(cy+H/2/ts));
+   l.tiles.forEach(i=>i._v=0);
+   if((x1-x0+1)*(y1-y0+1)<=400)for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const k=tz+'/'+x+'/'+y;if(!l.tiles.has(k))mkTile(l,li,tz,x,y,n);l.tiles.get(k)._v=1}
+   l.tiles.forEach(i=>{const t=TS*2**(z-i._z),[qx,qy]=cen(i._z);const s=i.style;
+    s.left=(W/2+(i._x-qx/TS)*t)+'px';s.top=(H/2+(i._y-qy/TS)*t)+'px';s.width=s.height=(t+.6)+'px'})});
+  const[cx,cy]=cen(z);
+  M.mks.forEach(m=>{const[mx,my]=proj(m.p[0],m.p[1],z),a=(m.o.icon&&m.o.icon.iconAnchor)||[0,0];m.el.style.transform=`translate(${mx-cx+W/2-a[0]}px,${my-cy+H/2-a[1]}px)`});
+  clearTimeout(ct);cn=0;ct=setTimeout(clean,350)}
+ function clean(){let wait=0;
+  M.layers.forEach(l=>{const tz=lvl(l);let need=0,done=0;l.tiles.forEach(i=>{if(i._z===tz&&i._v){need++;if(i._d)done++}});
+   const ready=need===done;if(!ready)wait=1;
+   l.tiles.forEach((i,k)=>{if(i._z===tz?!i._v:(ready||cn>12)){i.remove();l.tiles.delete(k)}})});
+  if(wait&&cn++<14)ct=setTimeout(clean,400)}
+ const attr=()=>{at.textContent=[...new Set(M.layers.map(l=>l.o.attribution).filter(Boolean))].join(' | ')};
+ M._add=x=>{if(x.tiles){if(!M.layers.includes(x)){M.layers.push(x);x.map=M}attr()}else if(!M.mks.includes(x)){M.mks.push(x);ml.appendChild(x.el);x.map=M}M.draw()};
+ M.removeLayer=x=>{if(x.ls)x.ls.forEach(M.removeLayer);else if(x.tiles){M.layers=M.layers.filter(l=>l!==x);x.tiles.forEach(i=>i.remove());x.tiles.clear();attr()}else{M.mks=M.mks.filter(m=>m!==x);x.el.remove()}M.draw();return M};
+ const rel=e=>{const r=el.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+ const toLL=(x,y)=>{const[W,H]=sz(),[cx,cy]=proj(M.c[0],M.c[1],M.z);return unproj(cx+x-W/2,cy+y-H/2,M.z)};
+ M.zoomAt=(x,y,nz)=>{nz=clamp(nz,M.minZ,19);const[W,H]=sz(),p=toLL(x,y),[wx,wy]=proj(p[0],p[1],nz);M.c=unproj(wx-(x-W/2),wy-(y-H/2),nz);M.z=nz;M.draw()};
+ const ptr=new Map();let g=null;
+ el.addEventListener('pointerdown',e=>{if(e.target.closest('.mm-z'))return;anim++;ptr.set(e.pointerId,rel(e));try{el.setPointerCapture(e.pointerId)}catch{}
+  if(ptr.size===1)g={mv:0,t:Date.now()};else if(g)g.mv=99});
+ el.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId)||!g)return;const[nx,ny]=rel(e),[ox,oy]=ptr.get(e.pointerId);
+  if(ptr.size===1){const dx=nx-ox,dy=ny-oy;g.mv+=Math.abs(dx)+Math.abs(dy);const[cx,cy]=proj(M.c[0],M.c[1],M.z);M.c=unproj(cx-dx,cy-dy,M.z);ptr.set(e.pointerId,[nx,ny]);M.draw()}
+  else if(ptr.size===2){const a=[...ptr.values()],d0=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);ptr.set(e.pointerId,[nx,ny]);
+   const b=[...ptr.values()],d1=Math.hypot(b[0][0]-b[1][0],b[0][1]-b[1][1]);g.mv=99;if(d0>0&&d1>0)M.zoomAt((b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2,M.z+Math.log2(d1/d0))}});
+ const up=ok=>e=>{if(!ptr.has(e.pointerId))return;ptr.delete(e.pointerId);
+  if(ok&&!ptr.size&&g&&g.mv<8&&Date.now()-g.t<700){const[x,y]=rel(e),p=toLL(x,y);M.emit('click',{latlng:{lat:p[0],lng:p[1]}})}};
+ el.addEventListener('pointerup',up(1));el.addEventListener('pointercancel',up(0));
+ el.addEventListener('wheel',e=>{e.preventDefault();anim++;const[x,y]=rel(e);M.zoomAt(x,y,M.z-e.deltaY*(e.deltaMode?.05:.0022))},{passive:false});
+ el.addEventListener('dblclick',e=>{if(e.target.closest('.mm-z')||e.target.closest('.mm-m>*'))return;const[x,y]=rel(e);M.zoomAt(x,y,M.z+1)});
+ M.flyTo=(p,z,o={})=>{const id=++anim,c0=M.c.slice(),z0=M.z,c1=ll(p),z1=clamp(z==null?M.z:z,M.minZ,19),d=(o.duration==null?1:o.duration)*1000,t0=performance.now();
+  let dl=c1[1]-c0[1];if(dl>180)dl-=360;if(dl<-180)dl+=360;
+  const step=t=>{if(id!==anim)return;const k=clamp((t-t0)/d,0,1),e=k<.5?2*k*k:1-2*(1-k)*(1-k);
+   M.c=[c0[0]+(c1[0]-c0[0])*e,c0[1]+dl*e];M.z=z0+(z1-z0)*e;M.draw();if(k<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step);return M};
+ M.setView=(p,z)=>{M.c=ll(p).slice();M.z=z;M.draw();return M};
+ M.getZoom=()=>M.z;M.getCenter=()=>({lat:M.c[0],lng:M.c[1]});
+ M.fitBounds=(b,o={})=>{const pad=(o.padding||[0])[0],mz=o.maxZoom||19,[W,H]=sz(),ps=b.pts.map(q=>proj(q[0],q[1],0)),xs=ps.map(q=>q[0]),ys=ps.map(q=>q[1]);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);let z=mz;
+  if(x1>x0||y1>y0)z=Math.min(mz,Math.log2(Math.min((W-2*pad)/Math.max(x1-x0,1e-9),(H-2*pad)/Math.max(y1-y0,1e-9))));
+  M.z=clamp(z,M.minZ,19);M.c=unproj((x0+x1)/2,(y0+y1)/2,0);M.draw();return M};
+ zc.children[0].onclick=()=>M.flyTo(M.c,Math.round(M.z)+1,{duration:.3});
+ zc.children[1].onclick=()=>M.flyTo(M.c,Math.round(M.z)-1,{duration:.3});
+ new ResizeObserver(()=>M.draw()).observe(el);
+ return M}
+return{map,tileLayer,layerGroup,marker,divIcon:o=>o,latLngBounds:a=>({pts:a,isValid:()=>a.length>0})}})();
+
+const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fa=n=>(n===''||n==null||isNaN(n))?'—':Number(n).toLocaleString('fa-IR');
+const yn=['دارد','ندارد'], isRes=d=>d.usage==='مسکونی', isApt=d=>d.homeType==='آپارتمانی';
+// تعریف فیلدها: [کلید، برچسب، نوع، گزینه‌ها، شرط نمایش، عرض کامل]
+const SECTIONS=[
+['مشخصات کلی',[
+ ['placeName','نام محل','text'],['owner','نام و نام خانوادگی مالک','text'],
+ ['address','آدرس','text',0,0,1],['plateMain','پلاک اصلی','text'],['plateSub','پلاک فرعی','text'],
+ ['lat','عرض جغرافیایی (Lat)','number'],['lng','طول جغرافیایی (Lng)','number']]],
+['مساحت و کاربری',[
+ ['areaLand','مساحت عرصه (متر مربع)','number'],['areaBuilt','مساحت اعیانی (متر مربع)','number'],
+ ['usage','نوع کاربری','select',['زراعی','باغی','مسکونی']],
+ ['zone','موقعیت زمین','select',['داخل محدوده','خارج از محدوده','داخل حریم شهری','داخل حریم روستایی'],d=>d.usage==='زراعی'||d.usage==='باغی'],
+ ['gardenType','نوع باغ','text',0,d=>d.usage==='باغی'],
+ ['homeType','نوع مسکونی','select',['خانه ویلایی','آپارتمانی'],isRes],
+ ['units','تعداد واحد (توسط تعیین‌کننده)','number',0,d=>isRes(d)&&isApt(d)]]],
+['ساختمان',[
+ ['structure','نوع سازه','select',['بتنی','آهنی','آجری']],
+ ['facing','نوع ساختمان','select',['شمالی','جنوبی'],isRes],['frontage','طول بر (متر)','number'],
+ ['elevator','آسانسور','select',yn,isRes],['parking','پارکینگ','select',yn,isRes],['storage','انباری','select',yn,isRes],
+ ['balcony','بالکن','select',yn,isRes],['yard','حیاط','select',yn,isRes]]],
+['سند',[
+ ['deedKind','نوع سند','select',['رسمی','عادی (قولنامه)']],
+ ['deedType','نوع سند رسمی','select',['شش دانگ','مشاعی'],d=>d.deedKind==='رسمی']]],
+['قیمت',[
+ ['pricePerM2','قیمت پایه هر متر مربع (تومان)','number'],['total','قیمت کل (تومان)','number']]],
+['توضیحات',[['desc','توضیحات','textarea',0,0,1],['other','سایر مشخصات','textarea',0,0,1]]]];
+const ALL=SECTIONS.flatMap(s=>s[1]);
+const ICON={'زراعی':'🌾','باغی':'🌳','مسکونی':'🏠'};
+let lands=[],token=localStorage.getItem('tk')||'',admin=false,filter='همه',draft=null,editing=null,media=[];
+
+const map=L.map('map',{zoomControl:false,minZoom:2,worldCopyJump:true}).setView([32.4,53.7],5);
+const T=(u,o={})=>L.tileLayer(u,{maxZoom:20,subdomains:'0123',...o});
+const LAYERS={
+ sat:T('https://mt{s}.google.com/vt/lyrs=y&hl=fa&x={x}&y={y}&z={z}',{attribution:'© Google'}),
+ str:T('https://mt{s}.google.com/vt/lyrs=m&hl=fa&x={x}&y={y}&z={z}',{attribution:'© Google'}),
+ esri:L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery © Esri'}),
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19})]),
+ osm:T('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{subdomains:'abc',maxZoom:19,attribution:'© OpenStreetMap'})};
+const CUSTOM_TILE='';   // اختیاری: آدرس تایل دلخواه با {z}/{x}/{y} (مثلاً نقشه‌ی ایرانی)
+if(CUSTOM_TILE){LAYERS.custom=T(CUSTOM_TILE,{subdomains:'abc'});$('#layers').insertAdjacentHTML('afterbegin','<button data-l="custom">⭐ اختصاصی</button>')}
+let curL='';
+function setLayer(l){if(curL)map.removeLayer(LAYERS[curL]);curL=l;LAYERS[l].addTo(map);[...$('#layers').children].forEach(b=>b.classList.toggle('on',b.dataset.l===l))}
+$('#layers').onclick=e=>{const l=e.target.dataset.l;if(l)setLayer(l)};
+/* نمایش فوری نقشه پایه؛ سپس انتخاب خودکار منبعی که از شبکه کاربر سریع‌تر پاسخ می‌دهد */
+const PROBE={sat:'https://mt0.google.com/vt/lyrs=y&hl=fa&x=4&y=3&z=3',esri:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/3/3/4',osm:'https://a.tile.openstreetmap.org/3/4/3.png',str:'https://mt0.google.com/vt/lyrs=m&hl=fa&x=4&y=3&z=3'};
+if(CUSTOM_TILE)PROBE.custom=CUSTOM_TILE.replace('{s}','a').replace('{z}',3).replace('{x}',4).replace('{y}',3);
+setLayer('osm'); // کاربر منتظر پایان تست سرورها نمی‌ماند
+const probe=k=>new Promise(ok=>{const i=new Image(),t=setTimeout(()=>ok(0),1800);i.onload=()=>{clearTimeout(t);ok(k)};i.onerror=()=>{clearTimeout(t);ok(0)};i.src=PROBE[k]});
+(async()=>{const ks=[...(CUSTOM_TILE?['custom']:[]),'sat','esri','str','osm'];const k=await Promise.any(ks.map(x=>probe(x).then(v=>v||Promise.reject()))).catch(()=>0);if(k&&k!==curL)setLayer(k);if(!k)toast('اتصال به سرورهای نقشه برقرار نشد؛ نقشه ممکن است با محدودیت شبکه روبه‌رو باشد')})();
+
+// ورود مدیر تا زمان اتصال احراز هویت امن سمت‌سرور غیرفعال است.
+const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('estate-db',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const kvGet=async k=>{const d=await idb();return new Promise(ok=>{const r=d.transaction('kv').objectStore('kv').get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>ok(null)})};
+const kvSet=async(k,v)=>{const d=await idb();return new Promise((ok,no)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=ok;t.onerror=()=>no(t.error)})};
+const rid=()=>Math.random().toString(36).slice(2,10);
+/* ===== تنظیم سرور رایگان (Supabase) — راهنما در پاسخ چت =====
+   اگر این دو مقدار خالی بمانند، سایت در حالت محلی (فقط همین مرورگر) کار می‌کند. */
+const SUPA_URL='https://zxwabtmcceklueuqjusi.supabase.co';
+const SUPA_KEY='sb_publishable_krt8QbKw0ipcEWkIPgr3FA_UHieH8aS';
+const REMOTE=!!(SUPA_URL&&SUPA_KEY);
+let session=null;try{session=JSON.parse(localStorage.getItem('sb')||'null')}catch{}
+const saveSess=j=>{session={access_token:j.access_token,refresh_token:j.refresh_token};localStorage.setItem('sb',JSON.stringify(session))};
+async function sbLogin(email,password){const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+ const j=await r.json();if(!r.ok)throw new Error(j.msg||j.message||j.error_description||'ورود ناموفق بود؛ ایمیل و رمز را بررسی کنید');saveSess(j)}
+async function sbRefresh(){if(!session)throw new Error('وارد نشده‌اید');
+ const r=await fetch(SUPA_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
+ const j=await r.json();if(!r.ok){session=null;localStorage.removeItem('sb');throw new Error('نشست تمام شد؛ دوباره وارد شوید')}saveSess(j)}
+async function sb(path,o={},auth=true,retry=true){
+ const r=await fetch(SUPA_URL+path,{...o,headers:{apikey:SUPA_KEY,Authorization:'Bearer '+((auth&&session&&session.access_token)||SUPA_KEY),'Content-Type':'application/json',...(o.headers||{})}});
+ if(r.status===401&&auth&&retry&&session){await sbRefresh();return sb(path,o,auth,false)}
+ if(!r.ok){let m='خطا در ارتباط با سرور';try{const j=await r.json();m=j.message||j.msg||j.error_description||m}catch{}throw new Error(m)}return r}
+async function sbIsAdmin(){
+ const ur=await sb('/auth/v1/user'),user=await ur.json();
+ if(!user||!user.id)throw new Error('حساب کاربری معتبر نیست؛ دوباره وارد شوید');
+ const ar=await sb('/rest/v1/admins?select=user_id&user_id=eq.'+encodeURIComponent(user.id)+'&limit=1');
+ const rows=await ar.json();
+ if(!rows.length)throw new Error('این حساب در فهرست مدیران مجاز نیست');
+ return user;
+}
+const apiBase=async(u,o={})=>{
+ const body=o.body?JSON.parse(o.body):{},m=o.method||'GET';
+ if(u==='/api/login'){throw new Error('ورود مدیر هنوز پیکربندی نشده است؛ ابتدا احراز هویت امن سمت‌سرور را راه‌اندازی کنید')}
+ if(u==='/api/check'){if(token==='ok')return{};throw new Error('no')}
+ let a=(await kvGet('lands'))||[];
+ if(u==='/api/lands'&&m==='GET')return a;
+ if(token!=='ok')throw new Error('دسترسی ندارید');
+ if(u==='/api/lands'&&m==='POST'){body.id=rid();a.push(body)}
+ else{const id=u.split('/').pop();if(m==='PUT')a=a.map(x=>x.id===id?{...body,id}:x);else a=a.filter(x=>x.id!==id)}
+ await kvSet('lands',a);return body};
+const apiLocal=apiBase;
+const apiRemote=async(u,o={})=>{
+ const body=o.body?JSON.parse(o.body):{},m=o.method||'GET';
+ if(u==='/api/login'){await sbLogin(body.email,body.password);try{await sbIsAdmin()}catch(e){session=null;localStorage.removeItem('sb');throw e}token='ok';return{token}}
+ if(u==='/api/check'){await sbRefresh();await sbIsAdmin();token='ok';return{}}
+ if(u==='/api/lands'&&m==='GET'){const rows=await(await sb('/rest/v1/lands?select=*&order=created_at',{},false)).json();return rows.map(r=>({...r.data,id:r.id}))}
+ if(u==='/api/lands'&&m==='POST'){const id=rid()+rid();await sb('/rest/v1/lands',{method:'POST',body:JSON.stringify({id,data:body})});return{...body,id}}
+ const id=u.split('/').pop();
+ if(m==='PUT'){await sb('/rest/v1/lands?id=eq.'+id,{method:'PATCH',body:JSON.stringify({data:body})});return body}
+ await sb('/rest/v1/lands?id=eq.'+id,{method:'DELETE'});return{}};
+const api=(u,o)=>(REMOTE?apiRemote:apiLocal)(u,o);
+
+const readMediaLocal=f=>new Promise((ok,no)=>{
+ if(f.type.startsWith('video')){if(f.size>40e6)return no(new Error('حجم فیلم بیشتر از ۴۰ مگابایت است'));
+  const r=new FileReader();r.onload=()=>ok({url:r.result,type:'video'});r.onerror=no;return r.readAsDataURL(f)}
+ const img=new Image();img.onload=()=>{const k=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');
+  c.width=img.width*k;c.height=img.height*k;c.getContext('2d').drawImage(img,0,0,c.width,c.height);ok({url:c.toDataURL('image/jpeg',.82),type:'image'})};
+ img.onerror=()=>no(new Error('فایل تصویر نامعتبر'));img.src=URL.createObjectURL(f)});
+const toBlob=f=>new Promise((ok,no)=>{const img=new Image();img.onload=()=>{const k=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=img.width*k;c.height=img.height*k;c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(ok,'image/jpeg',.82)};img.onerror=()=>no(new Error('فایل تصویر نامعتبر'));img.src=URL.createObjectURL(f)});
+const readMedia=async f=>{if(!REMOTE)return readMediaLocal(f);
+ const vid=f.type.startsWith('video');if(vid&&f.size>50e6)throw new Error('حجم فیلم بیشتر از ۵۰ مگابایت است');
+ const blob=vid?f:await toBlob(f),name=rid()+rid()+(vid?(f.name.match(/\.\w+$/)||['.mp4'])[0]:'.jpg');
+ await sb('/storage/v1/object/media/'+name,{method:'POST',body:blob,headers:{'Content-Type':blob.type||'application/octet-stream'}});
+ return{url:SUPA_URL+'/storage/v1/object/public/media/'+name,type:vid?'video':'image'}};
+async function exportData(){const b=new Blob([JSON.stringify(await kvGet('lands')||[])],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='املاک-پشتیبان.json';a.click()}
+function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(!Array.isArray(d))throw 0;await kvSet('lands',d);toast('✅ وارد شد');loadLands()}catch{toast('فایل نامعتبر است')}};i.click()}
+const toast=t=>{const e=document.createElement('div');e.className='toast glass';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2600)};
+
+let markers={};
+const mk=d=>L.marker([d.lat,d.lng],{icon:L.divIcon({className:'',html:`<div class="pin"><i>${ICON[d.usage]||'📍'}</i><span class="pin-flag" title="ملک ثبت‌شده">✓</span></div>`,iconSize:[34,34],iconAnchor:[8,34]})});
+function render(){
+ const q=$('#q').value.trim(), cats=['همه','زراعی','باغی','مسکونی'];
+ $('#chips').innerHTML=cats.map(c=>`<button class="chip ${c===filter?'on':''}" data-c="${c}">${c}</button>`).join('');
+ const rows=lands.filter(d=>(filter==='همه'||d.usage===filter)&&(!q||[d.placeName,d.owner,d.address,d.plateMain,d.plateSub].join(' ').includes(q)));
+ Object.values(markers).forEach(m=>map.removeLayer(m));markers={};
+ rows.forEach(d=>{if(isNaN(d.lat)||isNaN(d.lng))return;markers[d.id]=mk(d).addTo(map).on('click',()=>show(d.id))});
+ $('#cnt').textContent=`(${fa(rows.length)})`;
+ $('#list').innerHTML=rows.length?rows.map(d=>{const t=(d.media||[]).find(m=>m.type==='image');
+  return `<div class="card" data-id="${d.id}"><div class="thumb" style="${t?`background-image:url('${esc(t.url)}')`:''}">${t?'':ICON[d.usage]||'📍'}</div>
+  <div><b>${esc(d.placeName||'بدون نام')}</b><div class="m">${esc(d.usage||'')} · ${fa(d.areaLand)} متر</div><div class="price">${d.total?fa(d.total)+' تومان':'توافقی'}</div></div></div>`}).join('')
+  :`<div class="empty">${admin?'روی نقشه کلیک کنید یا دکمه «ملک جدید» را بزنید.':'هنوز ملکی ثبت نشده است.'}</div>`;
+}
+$('#chips').onclick=e=>{if(e.target.dataset.c){filter=e.target.dataset.c;render()}};
+$('#q').oninput=render;
+$('#list').onclick=e=>{const c=e.target.closest('.card');if(c){show(c.dataset.id);const d=lands.find(x=>x.id===c.dataset.id);map.setView([d.lat,d.lng],Math.max(map.getZoom(),16))}};
+$('#toggleSide').onclick=()=>{$('#side').classList.toggle('show');document.body.classList.toggle('sideopen')};
+async function loadLands(){try{lands=await api('/api/lands')}catch{lands=[]}render()}
+
+/* نمایش جزئیات */
+function open_(t,h){$('#shT').textContent=t;$('#shB').innerHTML=h;$('#sheet').classList.add('open')}
+function close_(){$('#sheet').classList.remove('open');if(draft){map.removeLayer(draft);draft=null}$('#hint').style.display='none'}
+$('#shX').onclick=close_;
+function show(id){
+ const d=lands.find(x=>x.id===id);if(!d)return;
+ const med=(d.media||[]).map(m=>m.type==='video'?`<video src="${esc(m.url)}" controls playsinline preload="metadata"></video>`:`<img src="${esc(m.url)}" loading="lazy">`).join('');
+ const rows=ALL.filter(f=>f[2]!=='textarea'&&!['placeName','pricePerM2','total','lat','lng'].includes(f[0])&&(!f[4]||f[4](d))&&d[f[0]]!==''&&d[f[0]]!=null)
+  .map(f=>`<tr><td>${f[1].replace(/ \(.*\)/,'')}</td><td>${f[2]==='number'?fa(d[f[0]]):esc(d[f[0]])}</td></tr>`).join('');
+ open_(d.placeName||'جزئیات ملک',`${med?`<div class="gal">${med}</div>`:`<div class="hero">تصویری ثبت نشده</div>`}
+  <span class="tag">${ICON[d.usage]||''} ${esc(d.usage)}</span>${d.deedKind?`<span class="tag">سند ${esc(d.deedKind)}</span>`:''}
+  <div class="big">${d.total?fa(d.total)+' تومان':'قیمت توافقی'}</div>
+  ${d.pricePerM2?`<div style="color:var(--mu);font-size:13px">هر متر مربع: ${fa(d.pricePerM2)} تومان</div>`:''}
+  <table class="tbl">${rows}<tr><td>مختصات</td><td dir="ltr" style="text-align:right">${(+d.lat).toFixed(6)}, ${(+d.lng).toFixed(6)}</td></tr></table>
+  ${d.desc?`<h4 style="margin:16px 0 6px">توضیحات</h4><p style="line-height:2;font-size:14px;color:#3a4568;white-space:pre-wrap">${esc(d.desc)}</p>`:''}
+  ${d.other?`<h4 style="margin:16px 0 6px">سایر مشخصات</h4><p style="line-height:2;font-size:14px;color:#3a4568;white-space:pre-wrap">${esc(d.other)}</p>`:''}
+  <div class="bar"><a class="btn" style="text-align:center;text-decoration:none" target="_blank" href="https://www.google.com/maps?q=${d.lat},${d.lng}">📍 مسیریابی</a>
+  ${admin?`<button class="btn" onclick="edit('${d.id}')">✏️ ویرایش</button><button class="btn danger" onclick="del('${d.id}')">🗑 حذف</button>`:''}</div>`);
+}
+/* فرم */
+function formHTML(d){
+ let h='<div class="grid">';
+ SECTIONS.forEach(([t,fs])=>{h+=`<div class="sec">${t}</div>`;
+  fs.forEach(([k,l,ty,op,sh,w])=>{const v=d[k]??'';
+   h+=`<div class="fld ${w||ty==='textarea'?'w':''}" data-k="${k}"><label>${l}</label>`+
+    (ty==='select'?`<select name="${k}"><option value="">انتخاب کنید</option>${op.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select>`
+    :ty==='textarea'?`<textarea name="${k}">${esc(v)}</textarea>`
+    :`<input name="${k}" type="${ty==='number'?'number':'text'}" step="any" value="${esc(v)}">`)+'</div>'})});
+ h+=`<div class="sec">عکس و فیلم</div><label class="up" id="upl">📷 برای افزودن عکس یا فیلم کلیک کنید<input type="file" id="file" accept="image/*,video/*" multiple hidden></label><div class="mrow" id="mrow"></div></div>
+ <div class="bar"><button class="btn gold" id="save">ذخیره ملک</button><button class="btn" onclick="close_()">انصراف</button></div>`;return h}
+function formData(){const d={};document.querySelectorAll('#shB [name]').forEach(e=>d[e.name]=e.type==='number'?(e.value===''?'':+e.value):e.value);
+ // حذف فیلدهای مخفی
+ ALL.forEach(f=>{if(f[4]&&!f[4](d))d[f[0]]=''});d.media=media;return d}
+function vis(){const d=formData();ALL.forEach(f=>{const el=document.querySelector(`.fld[data-k="${f[0]}"]`);if(el&&f[4])el.classList.toggle('hide',!f[4](d))})}
+function mrow(){$('#mrow').innerHTML=media.map((m,i)=>`<div class="mi">${m.type==='video'?`<video src="${m.url}"></video>`:`<img src="${m.url}">`}<b onclick="media.splice(${i},1);mrow()">✕</b></div>`).join('')}
+function openForm(d,title){
+ media=[...(d.media||[])];open_(title,formHTML(d));mrow();vis();
+ const b=$('#shB');b.oninput=b.onchange=e=>{
+  if(e.target.name==='pricePerM2'||e.target.name==='areaLand'){const f=formData();if(f.pricePerM2&&f.areaLand)b.querySelector('[name=total]').value=Math.round(f.pricePerM2*f.areaLand)}
+  if(e.target.name==='lat'||e.target.name==='lng'){const f=formData();if(draft&&f.lat!==''&&f.lng!=='')draft.setLatLng([f.lat,f.lng])}vis()};
+ $('#file').onchange=async e=>{for(const f of e.target.files){$('#upl').firstChild.textContent=`⏳ در حال آپلود ${f.name}…`;
+   try{media.push(await readMedia(f));mrow()}catch(er){toast(er.message||'آپلود ناموفق')}}
+  $('#upl').firstChild.textContent='📷 برای افزودن عکس یا فیلم کلیک کنید'};
+ $('#save').onclick=async()=>{const f=formData();
+  if(f.lat===''||f.lng===''||isNaN(f.lat)||isNaN(f.lng))return toast('مختصات را وارد کنید یا روی نقشه کلیک کنید');
+  if(!f.usage)return toast('نوع کاربری را انتخاب کنید');
+  try{if(editing)await api('/api/lands/'+editing,{method:'PUT',body:JSON.stringify(f)});else await api('/api/lands',{method:'POST',body:JSON.stringify(f)});
+   toast('✅ ذخیره شد');editing=null;close_();await loadLands()}catch(er){toast(er.message)}}}
+function startNew(lat,lng){editing=null;if(draft)map.removeLayer(draft);
+ draft=L.marker([lat,lng],{draggable:true,icon:L.divIcon({className:'',html:'<div class="pin draft"><i>📍</i></div>',iconSize:[34,34],iconAnchor:[8,34]})}).addTo(map);
+ draft.on('drag',()=>{const p=draft.getLatLng();document.querySelector('[name=lat]').value=p.lat.toFixed(6);document.querySelector('[name=lng]').value=p.lng.toFixed(6)});
+ openForm({lat:+(+lat).toFixed(6),lng:+(+lng).toFixed(6)},'ثبت ملک جدید');
+ if(innerWidth>760)map.setView([lat,lng],Math.max(map.getZoom(),15))}
+function edit(id){editing=id;const d=lands.find(x=>x.id===id);if(draft)map.removeLayer(draft);draft=null;openForm(d,'ویرایش ملک')}
+async function del(id){if(!confirm('این ملک حذف شود؟'))return;try{await api('/api/lands/'+id,{method:'DELETE'});close_();toast('حذف شد');loadLands()}catch(e){toast(e.message)}}
+map.on('click',e=>{if(admin&&!$('#sheet').classList.contains('open'))startNew(e.latlng.lat,e.latlng.lng)});
+/* مدیر */
+function setAdmin(on){admin=on;$('#adminBtn').textContent=on?'خروج مدیر':'ورود مدیر';
+ let n=$('#newBtn');if(on&&!n){n=document.createElement('button');n.id='newBtn';n.className='btn gold';n.textContent='＋ ملک جدید';
+  n.onclick=()=>{const c=map.getCenter();toast('روی نقشه کلیک کنید تا مکان ملک مشخص شود');$('#hint').style.display='block';$('#hint').textContent='📍 مکان ملک را روی نقشه انتخاب کنید';setTimeout(()=>$('#hint').style.display='none',4000)};
+  $('#adminBtn').before(n);
+  const e=document.createElement('button');e.id='bkBtn';e.className='btn';e.textContent='💾 پشتیبان';e.onclick=()=>confirm('OK = دریافت فایل پشتیبان\nCancel = بازگردانی از فایل')?exportData():importData();if(!REMOTE)$('#adminBtn').before(e)}
+ else if(!on&&n){n.remove();$('#bkBtn')?.remove()}render()}
+$('#adminBtn').onclick=async()=>{
+ if(admin){token='';session=null;localStorage.removeItem('tk');localStorage.removeItem('sb');setAdmin(false);return}
+ let em='';if(REMOTE){em=prompt('ایمیل مدیر:');if(!em)return}const p=prompt(REMOTE?'رمز مدیر:':'رمز مدیریت را وارد کنید:');if(!p)return;
+ try{const r=await api('/api/login',{method:'POST',body:JSON.stringify({password:p,email:em})});token=r.token;localStorage.setItem('tk',token);setAdmin(true);toast('✅ وارد شدید — روی نقشه کلیک کنید تا ملک ثبت شود')}catch(e){toast(e.message)}};
+(async()=>{if(token){try{await api('/api/check');setAdmin(true)}catch{token='';localStorage.removeItem('tk')}}await loadLands();
+ if(lands.length){const b=L.latLngBounds(lands.filter(d=>d.lat!=null).map(d=>[d.lat,d.lng]));if(b.isValid())map.fitBounds(b,{padding:[80,80],maxZoom:14})}})();
+</script>
+</body>
+</html>
